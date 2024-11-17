@@ -21,21 +21,26 @@ export function useNotifications() {
         if (!job.interviewDate) return false;
         const interviewDate = new Date(job.interviewDate);
         interviewDate.setHours(0, 0, 0, 0);
-        return interviewDate.getTime() === tomorrow.getTime();
+        return interviewDate.getTime() === tomorrow.getTime() && job.status === 'INTERVIEWING';
       });
 
       for (const job of jobsWithInterviewTomorrow) {
-        const success = await sendInterviewReminder({
-          to_email: user.email!,
-          to_name: user.displayName || user.email!.split('@')[0],
-          company: job.company,
-          position: job.position,
-          interview_date: new Date(job.interviewDate!).toLocaleDateString(),
-          interview_time: job.interviewTime
-        });
+        try {
+          const success = await sendInterviewReminder({
+            to_email: user.email!,
+            to_name: user.displayName || user.email!.split('@')[0],
+            company: job.company,
+            position: job.position,
+            interview_date: new Date(job.interviewDate!).toLocaleDateString(),
+          });
 
-        if (success) {
-          toast.success(`Interview reminder sent for ${job.company}`);
+          if (success) {
+            console.log(`Interview reminder sent for ${job.company}`);
+            toast.success(`Interview reminder sent for ${job.company}`);
+          }
+        } catch (error) {
+          console.error('Error sending notification:', error);
+          toast.error(`Failed to send reminder for ${job.company}`);
         }
       }
     };

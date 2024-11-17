@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Search, Briefcase, ListTodo, Send, CalendarDays, CheckCircle2, XCircle, LogOut } from 'lucide-react';
+import { Plus, Search, Briefcase, ListTodo, Send, CalendarDays, CheckCircle2, XCircle, LogOut, Menu } from 'lucide-react';
 import { Job, JobStatus } from '../types';
 import { JobForm } from './JobForm';
 import { StatusBoard } from './StatusBoard';
@@ -15,6 +15,7 @@ export function Dashboard() {
   const [showForm, setShowForm] = React.useState(false);
   const [editingJob, setEditingJob] = React.useState<Job | undefined>();
   const [search, setSearch] = React.useState('');
+  const [showMenu, setShowMenu] = React.useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -24,7 +25,6 @@ export function Dashboard() {
   React.useEffect(() => {
     if (!user) return;
 
-    // Enable network and set up real-time listener
     const setupFirestore = async () => {
       try {
         await enableNetwork(db);
@@ -44,7 +44,6 @@ export function Dashboard() {
 
     const unsubscribe = setupFirestore();
 
-    // Cleanup: disable network when component unmounts
     return () => {
       unsubscribe.then(unsub => {
         unsub?.();
@@ -130,23 +129,30 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      <div className="max-w-[1800px] mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="max-w-[1800px] mx-auto px-4 py-4 md:py-8">
+        <div className="flex items-center justify-between mb-6 md:mb-8">
           <div className="flex items-center gap-3">
             <Briefcase className="w-8 h-8 text-blue-500" />
-            <h1 className="text-2xl font-bold">Job Application Tracker</h1>
+            <h1 className="text-xl md:text-2xl font-bold">Job Tracker</h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-1 md:gap-2 bg-blue-500 hover:bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg transition-colors text-sm md:text-base"
             >
-              <Plus size={20} />
-              Add Application
+              <Plus size={18} />
+              <span className="hidden md:inline">Add Application</span>
+              <span className="md:hidden">Add</span>
+            </button>
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="md:hidden text-gray-400 hover:text-white"
+            >
+              <Menu size={24} />
             </button>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+              className="hidden md:flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
             >
               <LogOut size={20} />
               Logout
@@ -154,20 +160,37 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="mb-6 max-w-xl">
+        {showMenu && (
+          <div className="md:hidden fixed inset-0 bg-gray-900/95 z-50 flex items-center justify-center">
+            <div className="p-4">
+              <button
+                onClick={() => {
+                  setShowMenu(false);
+                  handleLogout();
+                }}
+                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+              >
+                <LogOut size={20} />
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search companies, positions, or locations..."
+              placeholder="Search jobs..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-gray-800 text-white rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-gray-800 text-white rounded-lg pl-10 pr-4 h-12 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 auto-rows-fr">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
           {boards.map(board => (
             <StatusBoard
               key={board.status}
